@@ -52,10 +52,10 @@
 {
   id value = self.value;
   if (self.elementType == XCUIElementTypeStaticText) {
-    value = FBFirstNonEmptyValue(self.value, self.label);
+    value = FBFirstNonAXErrorValue(self.value, self.label);
   }
   if (self.elementType == XCUIElementTypeButton) {
-    value = FBFirstNonEmptyValue(self.value, (self.isSelected ? @YES : nil));
+    value = FBFirstNonAXErrorValue(self.value, (self.isSelected ? @YES : nil));
   }
   if (self.elementType == XCUIElementTypeSwitch) {
     value = @([self.value boolValue]);
@@ -63,9 +63,9 @@
   if (self.elementType == XCUIElementTypeTextView ||
       self.elementType == XCUIElementTypeTextField ||
       self.elementType == XCUIElementTypeSecureTextField) {
-    value = FBFirstNonEmptyValue(self.value, self.placeholderValue);
+    value = FBFirstNonAXErrorValue(self.value, self.placeholderValue);
   }
-  value = FBTransferEmptyStringToNil(value);
+  value = FBTransferAXErrorStringToNil(value);
   if (value) {
     value = [NSString stringWithFormat:@"%@", value];
   }
@@ -74,7 +74,7 @@
 
 - (NSString *)wdName
 {
-  return FBTransferEmptyStringToNil(FBFirstNonEmptyValue(self.identifier, self.label));
+  return FBTransferAXErrorStringToNil(FBFirstNonAXErrorValue(self.identifier, self.label));
 }
 
 - (NSString *)wdLabel
@@ -82,7 +82,7 @@
   if (self.elementType == XCUIElementTypeTextField) {
     return self.label;
   }
-  return FBTransferEmptyStringToNil(self.label);
+  return FBTransferAXErrorStringToNil(self.label);
 }
 
 - (NSString *)wdType
