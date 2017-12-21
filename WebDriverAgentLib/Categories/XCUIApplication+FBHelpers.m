@@ -7,9 +7,12 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#import <objc/runtime.h>
+
 #import "XCUIApplication+FBHelpers.h"
 
 #import "FBSpringboardApplication.h"
+#import "XCAccessibilityElement.h"
 #import "XCElementSnapshot.h"
 #import "FBElementTypeTransformer.h"
 #import "FBMacros.h"
@@ -21,6 +24,8 @@
 #import "XCUIElement+FBWebDriverAttributes.h"
 
 const static NSTimeInterval FBMinimumAppSwitchWait = 3.0;
+static int associatedAccessibilityElement;
+static int associatedRunning;
 
 @implementation XCUIApplication (FBHelpers)
 
@@ -49,6 +54,67 @@ const static NSTimeInterval FBMinimumAppSwitchWait = 3.0;
   [self fb_waitUntilSnapshotIsStable];
   // We ignore all elements except for the main window for accessibility tree
   return [self.class accessibilityInfoForElement:self.fb_lastSnapshot];
+}
+
+- (XCAccessibilityElement *)fb_swizzledAccessibilityElement
+{
+  XCAccessibilityElement *element = objc_getAssociatedObject(
+    self, &associatedAccessibilityElement);
+
+  if (element) {
+    return element;
+  }
+
+  return [self fb_swizzledAccessibilityElement];
+}
+
+- (void)fb_overrideAccessibilityElement:(XCAccessibilityElement *)element
+{
+  static dispatch_once_t swizzleToken;
+
+  dispatch_once(&swizzleToken, ^{
+    Class klass = [XCUIApplication class];
+    Method realAccessibilityElement = class_getInstanceMethod(
+      klass, @selector(accessibilityElement));
+    Method swizzledAccessibilityElement = class_getInstanceMethod(
+      klass, @selector(fb_swizzledAccessibilityElement));
+
+    method_exchangeImplementations(
+      realAccessibilityElement, swizzledAccessibilityElement);
+  });
+
+  objc_setAssociatedObject(
+    self, &associatedAccessibilityElement, element, OBJC_ASSOCIATION_RETAIN);
+}
+
+- (BOOL)fb_swizzledRunning
+{
+  NSNumber *value = objc_getAssociatedObject(self, &associatedRunning);
+
+  if (value) {
+    return [value boolValue];
+  }
+
+  return [self fb_swizzledRunning];
+}
+
+- (void)fb_overrideRunning:(BOOL)running
+{
+  static dispatch_once_t swizzleToken;
+
+  dispatch_once(&swizzleToken, ^{
+    Class klass = [XCUIApplication class];
+    Method realRunning = class_getInstanceMethod(
+      klass, @selector(running));
+    Method swizzledRunning = class_getInstanceMethod(
+      klass, @selector(fb_swizzledRunning));
+
+    method_exchangeImplementations(
+      realRunning, swizzledRunning);
+  });
+
+  objc_setAssociatedObject(
+    self, &associatedRunning, @(running), OBJC_ASSOCIATION_RETAIN);
 }
 
 + (NSDictionary *)dictionaryForElement:(XCElementSnapshot *)snapshot

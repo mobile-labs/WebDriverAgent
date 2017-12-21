@@ -43,6 +43,15 @@
   NSAssert(nil != application, @"Active application instance is not expected to be equal to nil", nil);
   [application query];
   [application resolve];
+
+  // Dummy XCUIApplication objects created by newer XCTest versions on iOS 10
+  // are not capable of correctly tracking application state, so we override
+  // a bit of their state here.
+  if ([application.bundleID hasPrefix:@"local.pid."]) {
+    [application fb_overrideAccessibilityElement:activeApplicationElement];
+    [application fb_overrideRunning:YES];
+  }
+
   return application;
 }
 
