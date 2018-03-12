@@ -10,8 +10,7 @@ xcodebuild \
     -project WebDriverAgent.xcodeproj \
     -scheme WebDriverAgentRunner \
     -derivedDataPath DerivedData \
-    CODE_SIGN_IDENTITY="" \
-    CODE_SIGNING_REQUIRED=NO
+    CODE_SIGNING_REQUIRED=YES
 pushd DerivedData/Build/Products/Debug-iphoneos
 /usr/libexec/PlistBuddy \
     -c "set CFBundleShortVersionString $BUNDLE_VERSION" \
